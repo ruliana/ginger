@@ -16,7 +16,8 @@ Ginger follow some principles or "guidelines" (by order of importance):
 1.  [Low Surface To Volume Ratio](http://www.laputan.org/selfish/selfish.html#LowSurfaceToVolumeRatio)
 2.  [Gentle Learning Curve](http://www.laputan.org/selfish/selfish.html#GentleLearningCurve)
 3.  [Programming By Difference](http://www.laputan.org/selfish/selfish.html#ProgrammingByDifference)
-4.  Method Chaining
+4.  Method Chaining (not really a fluent interface)
+5.  Generic in, specific out (talking about arguments and return types)
 
 There are 3 things in Java I don't particularly like: Reflection, Collections and Regex.
 

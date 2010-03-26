@@ -176,12 +176,17 @@ public class DuckType {
 
     /**
      * Calls a method dynamically.
+     * <p>
+     * The <em>methodName</em> can be a {@link CharSequence}, that means it's
+     * possible to use {@link String}, {@link StringBuilder} and several other
+     * objects as the method name.
+     * </p>
      * 
      * @param <T>
      *            Type of return value (this <em>can</em> throws a
      *            {@link ClassCastException}).
      * @param methodName
-     *            The name of the method, as String. Still case sensitive.
+     *            The name of the method. Still case sensitive.
      * @param arguments
      *            The method arguments, if any.
      * @return The return value of the method or null if the method returns
@@ -190,21 +195,23 @@ public class DuckType {
      *             A custom NoSuchMethodException that's not checked.
      */
     @SuppressWarnings("unchecked")
-    public <T> T call(String methodName, Object... arguments)
+    public <T> T call(CharSequence methodName, Object... arguments)
             throws NoSuchMethodException {
 
         // Guard clause
         if (object == null) return null;
 
+        String immutableMethodName = methodName.toString();
         Class<?>[] argumentTypes = classesFor(arguments);
         String objectType = object.getClass().getName();
 
-        Method method = cache.get(objectType, methodName, argumentTypes);
-        
+        Method method = cache.get(objectType, immutableMethodName,
+                                  argumentTypes);
+
         // If no method in cache, go find it and fill my cache
         if (method == null) {
-            method = findMethod(methodName, argumentTypes);
-            cache.put(method, objectType, methodName, argumentTypes);
+            method = findMethod(immutableMethodName, argumentTypes);
+            cache.put(method, objectType, immutableMethodName, argumentTypes);
         }
 
         try {
@@ -221,7 +228,7 @@ public class DuckType {
     /**
      * Alias for {@link #callChained(String, Object...)}.
      */
-    public DuckType chain(String methodName, Object... arguments) {
+    public DuckType chain(CharSequence methodName, Object... arguments) {
         return callChained(methodName, arguments);
     }
 
@@ -229,7 +236,7 @@ public class DuckType {
      * Same as {@link #call(String, Object...)}, but wraps the returning value
      * in another DuckType, allowing chain call.
      */
-    public DuckType callChained(String methodName, Object... arguments)
+    public DuckType callChained(CharSequence methodName, Object... arguments)
             throws NoSuchMethodException {
 
         return new DuckType(call(methodName, arguments));
@@ -251,10 +258,10 @@ public class DuckType {
         } catch (java.lang.NoSuchMethodException e) {
 
             Method method = findMethodHardWay(methodName, argumentTypes);
-            
+
             // Not sure if I should rethrow it... :|
             if (method == null) throw new NoSuchMethodException(e);
-            
+
             return method;
 
         } catch (SecurityException e) {
