@@ -1,7 +1,11 @@
 package ginger;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import org.junit.Test;
 
@@ -51,5 +55,25 @@ public class RStringTest {
     public void extract() throws Exception {
         assertEquals("the", new RString("testing the test").extract("t.e").toString());
         assertEquals("the", new RString("testing the test").extract("testing (.*) test").toString());
+    }
+    
+    @Test
+    public void serialize() throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ObjectOutputStream objectOut = new ObjectOutputStream(out);
+        
+        objectOut.writeObject(new RString("test 1"));
+        objectOut.writeObject(new RString("test 2"));
+ 
+        objectOut.flush();
+        objectOut.close();
+        
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        ObjectInputStream objectIn = new ObjectInputStream(in);
+        
+        assertEquals("test 1", objectIn.readObject().toString()); 
+        assertEquals("test 2", objectIn.readObject().toString());
+        
+        objectIn.close();
     }
 }
