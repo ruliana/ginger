@@ -45,7 +45,7 @@ Ginger answer the problem with and Object called "Seq" that is compatible with L
 
 Unfortunately, I'm still working on it :)
 
-3 - Reflection  
+3 - Regular Expression  
 --------------
 
 Regular expressions on Java are really cool! However, to deal with "Pattern" and "Matcher" every time you need to extract a single group is a bit too much.
