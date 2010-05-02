@@ -1,6 +1,6 @@
 package ginger;
 
-import java.util.Deque;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
@@ -20,6 +20,42 @@ public class Xtring implements CharSequence {
         this.regex = regex;
     }
 
+    //===========================
+    // High level interface
+    //===========================
+    
+	public Xtring find(String regex) {
+		LinkedList<Xtring> result = findAll(regex);
+		return result.isEmpty() ? null : result.getFirst();
+	}
+	
+	public LinkedList<Xtring> findAll(String regex) {
+		final LinkedList<Xtring> result = new LinkedList<Xtring>();
+		on(regex).run(new OnMatch() {
+			public void execute() {
+				// OnMatch is applied from back to front,
+				// so we have to add the matches in reverse order
+				result.addFirst(match());
+			}
+		});
+		return result;
+	}
+
+	public Xtring negativeFind(String regex) {
+		final LinkedList<Xtring> result = new LinkedList<Xtring>();
+		on(regex).run(new OnMatch() {
+			public void execute() {
+				if (!next().equals("")) result.addFirst(next());
+				if (!previous().equals("")) result.addFirst(previous());
+			}
+		});
+		return result.isEmpty() ? null : result.getFirst();
+	}
+
+    //===========================
+    // Low level interface
+    //===========================
+    
     public Xtring on(String regex) {
         return new Xtring(string, regex);
     }
@@ -41,13 +77,31 @@ public class Xtring implements CharSequence {
         return string;
     }
     
-    public Xtring run(OnMatch onMatch) {
+	/**
+	 * This method executes {@link OnMatch#execute()} or
+	 * {@link OnMatch#execute(StringBuilder)} on each match of the regular
+	 * expression.
+	 * <p>
+	 * <em>WARNING!</em> This is a "low level" method intended to be used when
+	 * other methods does not provide the necessary functionality. It's a pretty
+	 * straight forward method, but it has a "catch":
+	 * </p>
+	 * <p>
+	 * <em>The matches are performed in reverse order, from end to begin.</em>
+	 * </p>
+	 * <p>
+	 * The method work this way because transformations are far easier to
+	 * perform. This way we can add or remove characters on transformation
+	 * without change the matches already done.
+	 * </p>
+	 */
+	public Xtring run(OnMatch onMatch) {
         
         // Guard clauses
         if (string == null) return this;
         if (regex == null) return this;
         
-        Deque<int[]> matches = allMatches();
+        LinkedList<int[]> matches = allMatches();
 
         if (matches.isEmpty()) return this;
 
@@ -81,14 +135,14 @@ public class Xtring implements CharSequence {
         return new Xtring(result);
     }
 
-    private Deque<int[]> allMatches() {
+    private LinkedList<int[]> allMatches() {
         assert string != null;
         assert regex != null ;
         
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(string);
         
-        Deque<int[]> matches = new LinkedList<int[]>();
+        LinkedList<int[]> matches = new LinkedList<int[]>();
         while (matcher.find()) {
             if (matcher.groupCount() == 0)
                 matches.add(new int[] { matcher.start(), matcher.end() });

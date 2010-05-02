@@ -9,8 +9,59 @@ import org.junit.Test;
 
 public class XtringTest {
 
+    //===========================
+    // High level interface
+    //===========================
+
+	@Test
+	public void find() throws Exception {
+		Xtring result;
+		
+		result = new Xtring("testing the test").find("t.e");
+		assertXtringEquals("the", result);
+		
+		result = new Xtring("testing the test").find("not exists");
+		assertNull(result);
+		
+		// We get only the first group
+		result = new Xtring("testing the test").find("testing (the) (test)");
+		assertXtringEquals("the", result);
+		
+		// More intuitive way to do "lookahead" and "lookbehind"
+		result = new Xtring("testing the test").find("testing (.*) test");
+		assertXtringEquals("the", result);
+	}
+	
+	@Test
+	public void findAll() throws Exception {
+		LinkedList<Xtring> result;
+		
+		result = new Xtring("taste the test").findAll("taste|test");
+		assertEquals("Number of matches", 2, result.size());
+		assertXtringEquals("First match", "taste", result.getFirst());
+		assertXtringEquals("Last match", "test", result.getLast());
+		
+		result = new Xtring("testing the test").findAll("not exists");
+		assertTrue(result.isEmpty());
+	}
+
+	@Test
+	public void negativeFind() throws Exception {
+		Xtring result;
+		
+		result = new Xtring("testing the test").negativeFind("testing");
+		assertXtringEquals(" the test", result);
+		
+		result = new Xtring("testing the test").negativeFind(" the ");
+		assertXtringEquals("testing", result);
+	}
+	
+    //===========================
+    // Low level interface
+    //===========================
+	
     @Test
-    public void basicJob() throws Exception {
+    public void basicMatching() throws Exception {
 
         final Boolean[] wasExecuted = new Boolean[] { false };
 
@@ -140,6 +191,10 @@ public class XtringTest {
         
         // BEWARE, String is NOT equals Xtring
         assertFalse("text".equals(new Xtring("text")));
+    }
+    
+    protected void assertXtringEquals(String message, String expected, Xtring actual) {
+        assertEquals(message, expected, actual.toString());
     }
 
     protected void assertXtringEquals(String expected, Xtring actual) {
