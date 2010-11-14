@@ -1,4 +1,4 @@
-package ginger;
+package ginger.experimental;
 
 /**
  * This class provides and interface to manipulate matches on Xtring (method

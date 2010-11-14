@@ -1,15 +1,18 @@
-package ginger;
+package ginger.experimental;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Xtring implements CharSequence {
-
+	
     private final String string;
     private final String regex;
+
+    //===========================
+    // High level interface
+    //===========================
 
     public Xtring(CharSequence string) {
         this(string, null);
@@ -19,10 +22,6 @@ public class Xtring implements CharSequence {
         this.string = string == null ? "" : string.toString();
         this.regex = regex;
     }
-
-    //===========================
-    // High level interface
-    //===========================
     
 	public Xtring find(String regex) {
 		LinkedList<Xtring> result = findAll(regex);
@@ -30,26 +29,33 @@ public class Xtring implements CharSequence {
 	}
 	
 	public LinkedList<Xtring> findAll(String regex) {
+		
+		final NegativeRegularExpression negative = new NegativeRegularExpression(regex);
+		
+		// I'm not really proud of this...
+		// TODO Find a better way to interrupt "OnMatch"
+		final boolean[] interruptFlag = new boolean[]{false};
+		
 		final LinkedList<Xtring> result = new LinkedList<Xtring>();
-		on(regex).run(new OnMatch() {
+		on(negative.getPositiveRegex()).run(new OnMatch() {
 			public void execute() {
+				if (interruptFlag[0]) return;
+				if (negative.shouldCheckForNegativeExpressions()) {
+					Xtring match = match();
+					if (!negative.matchIsAllowed(match)) {
+						result.clear();
+						interruptFlag[0] = true;
+						return;
+					}
+				}
+				
 				// OnMatch is applied from back to front,
-				// so we have to add the matches in reverse order
+				// so we have to add the matches to result 
+				// in reverse order
 				result.addFirst(match());
 			}
 		});
 		return result;
-	}
-
-	public Xtring negativeFind(String regex) {
-		final LinkedList<Xtring> result = new LinkedList<Xtring>();
-		on(regex).run(new OnMatch() {
-			public void execute() {
-				if (!next().equals("")) result.addFirst(next());
-				if (!previous().equals("")) result.addFirst(previous());
-			}
-		});
-		return result.isEmpty() ? null : result.getFirst();
 	}
 
     //===========================
@@ -118,18 +124,24 @@ public class Xtring implements CharSequence {
         Iterator<int[]> iterator = matches.descendingIterator();
         int[] nextMatch = new int[] { string.length(), string.length() };
         int[] currentMatch = iterator.next();
+        
+        // First match
         if (iterator.hasNext()) {
             int[] previousMatch = iterator.next();
             onMatch.runWith(result, previousMatch[1], currentMatch[0], currentMatch[1], nextMatch[0], false, true);
             nextMatch = currentMatch;
             currentMatch = previousMatch;
         }
+        
+        // "Middle" matches
         while (iterator.hasNext()) {
             int[] previousMatch = iterator.next();
             onMatch.runWith(result, previousMatch[1], currentMatch[0], currentMatch[1], nextMatch[0], false, false);
             nextMatch = currentMatch;
             currentMatch = previousMatch;
         }
+        
+        // Last match
         onMatch.runWith(result, 0, currentMatch[0], currentMatch[1], nextMatch[0], true, false);
         
         return new Xtring(result);
@@ -144,8 +156,12 @@ public class Xtring implements CharSequence {
         
         LinkedList<int[]> matches = new LinkedList<int[]>();
         while (matcher.find()) {
+        	
+        	// No capture group, return the whole match
             if (matcher.groupCount() == 0)
                 matches.add(new int[] { matcher.start(), matcher.end() });
+            
+            // Any capture group? So they are what we want
             else
                 for (int i = 1; i <= matcher.groupCount(); i++)
                     matches.add(new int[] { matcher.start(i), matcher.end(i) });
@@ -168,4 +184,53 @@ public class Xtring implements CharSequence {
     public CharSequence subSequence(int start, int end) {
         return string.subSequence(start, end);
     }
+
+    //===========================
+    // Helper class
+    //===========================
+
+	static class NegativeRegularExpression {
+		private final CharSequence regex;
+		private LinkedList<String> expressions = new LinkedList<String>();
+		private Iterator<String> currentExpression;
+		private String modifiedRegex;
+
+		public NegativeRegularExpression(CharSequence regex) {
+			this.regex = regex;
+			initialize();
+		}
+
+		public void initialize() {
+			// TODO Allow at least 10 levels of nesting parenthesis here.
+			Matcher matcher = matcher("\\(!!([^\\)]*)\\)", regex);
+			while (matcher.find()) {
+				expressions.add(matcher.group(1));
+			}
+			modifiedRegex = matcher.replaceAll("(.*)");
+			// The negative expressions will be checked in reverse
+			// order, that's way we need a reverse iterator.
+			currentExpression = expressions.descendingIterator();
+		}
+		
+		public String getPositiveRegex() {
+			return modifiedRegex;
+		}
+
+		public boolean matchIsAllowed(CharSequence match) {
+			if (expressions.isEmpty()) return true;
+			if (currentExpression == null) return true;
+			if (!currentExpression.hasNext()) return true;
+			String negatedRegexp = currentExpression.next();
+			return !match.toString().matches(negatedRegexp);
+		}
+		
+		private Matcher matcher(CharSequence regex, CharSequence string) {
+			Pattern negativeRegex = Pattern.compile(regex.toString());
+			return negativeRegex.matcher(string);
+		}
+
+		public boolean shouldCheckForNegativeExpressions() {
+			return !expressions.isEmpty();
+		}
+	}
 }

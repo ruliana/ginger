@@ -1,6 +1,12 @@
-package ginger;
+package ginger.experimental;
 
-import static org.junit.Assert.*;
+import static ginger.experimental.RString.r;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
+import ginger.experimental.Xtring.NegativeRegularExpression;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -12,24 +18,29 @@ public class XtringTest {
     //===========================
     // High level interface
     //===========================
+    
+    @Test
+    public void equals() throws Exception {
+        assertTrue(new Xtring("text").equals(new Xtring("text")));
+        
+        // Xtring is equals to String
+        assertTrue(new Xtring("text").equals("text"));
+        
+        // BEWARE, String is NOT equals Xtring
+        assertFalse("text".equals(new Xtring("text")));
+    }
 
 	@Test
 	public void find() throws Exception {
-		Xtring result;
+		assertXtringEquals("the", new Xtring("testing the test").find("t.e"));
 		
-		result = new Xtring("testing the test").find("t.e");
-		assertXtringEquals("the", result);
-		
-		result = new Xtring("testing the test").find("not exists");
-		assertNull(result);
+		assertNull(new Xtring("testing the test").find("not exists"));
 		
 		// We get only the first group
-		result = new Xtring("testing the test").find("testing (the) (test)");
-		assertXtringEquals("the", result);
+		assertXtringEquals("the", new Xtring("testing the test").find("testing (the) (test)"));
 		
-		// More intuitive way to do "lookahead" and "lookbehind"
-		result = new Xtring("testing the test").find("testing (.*) test");
-		assertXtringEquals("the", result);
+		// More intuitive way to do positive look-around
+		assertXtringEquals("the", new Xtring("testing the test").find("testing (.*) test"));
 	}
 	
 	@Test
@@ -44,16 +55,23 @@ public class XtringTest {
 		result = new Xtring("testing the test").findAll("not exists");
 		assertTrue(result.isEmpty());
 	}
-
+    
+    // Experimental
 	@Test
 	public void negativeFind() throws Exception {
-		Xtring result;
 		
-		result = new Xtring("testing the test").negativeFind("testing");
-		assertXtringEquals(" the test", result);
+		assertXtringEquals("the", new Xtring("testing the test").find("testing (!!mambo) test"));
 		
-		result = new Xtring("testing the test").negativeFind(" the ");
-		assertXtringEquals("testing", result);
+		assertNull(new Xtring("testing the test").find("testing (!!the) test"));
+		
+		LinkedList<Xtring> results;
+		
+		results = new Xtring("testing the test").findAll("testing (!!mambo) (!!jambo)");
+		assertXtringEquals("the", results.get(0));
+		assertXtringEquals("test", results.get(1));
+		
+		results = new Xtring("testing the test").findAll("testing (!!mambo) (!!test)");
+		assertTrue(results.toString(), results.isEmpty());
 	}
 	
     //===========================
@@ -181,17 +199,25 @@ public class XtringTest {
         
         assertXtringEquals("|t|es|t|ing |t|he x|t|ring", result2);
     }
-    
-    @Test
-    public void equals() throws Exception {
-        assertTrue(new Xtring("text").equals(new Xtring("text")));
-        
-        // Xtring is equals to String
-        assertTrue(new Xtring("text").equals("text"));
-        
-        // BEWARE, String is NOT equals Xtring
-        assertFalse("text".equals(new Xtring("text")));
-    }
+	
+	@Test
+	public void negativeRegularExpression() throws Exception {
+		
+		NegativeRegularExpression negative;
+		
+		negative = new NegativeRegularExpression("testing (!!mambo) test");
+		assertTrue(negative.shouldCheckForNegativeExpressions());
+		assertEquals("testing (.*) test", negative.getPositiveRegex());
+		assertFalse(negative.matchIsAllowed("mambo"));
+		assertTrue(negative.matchIsAllowed("the"));
+		
+		negative = new NegativeRegularExpression("testing (mambo) test");
+		assertFalse(negative.shouldCheckForNegativeExpressions());
+		
+		negative = new NegativeRegularExpression("testing (!!mambo) (!!jambo)");
+		assertTrue(negative.shouldCheckForNegativeExpressions());
+		assertEquals("testing (.*) (.*)", negative.getPositiveRegex());
+	}
     
     protected void assertXtringEquals(String message, String expected, Xtring actual) {
         assertEquals(message, expected, actual.toString());
