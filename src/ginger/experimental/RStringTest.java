@@ -1,6 +1,6 @@
-package ginger;
+package ginger.experimental;
 
-import static ginger.RString.*;
+import static ginger.experimental.RString.*;
 import static junit.framework.Assert.*;
 
 import java.io.ByteArrayInputStream;
@@ -50,6 +50,7 @@ public class RStringTest {
         assertRStringEquals("testing wabbathewabba test", r("testing the test").insert("wabba").around("ing (the) te"));
         
         // TODO: Not sure if the behavior is the expected one, but it makes sense (and same effect as insert.before)
+        // If you want to "replace" the string inside parenthesis, use the "replace" method.
         assertRStringEquals("testing wabbathe test", new RString("testing the test").insert("wabba").inside("ing (the) te"));
         
         // Multiple matches
@@ -66,17 +67,19 @@ public class RStringTest {
         assertRStringEquals("(testing) the test", r("testing the test").insert("(", ")").before("\\s+[^\\s]+\\s+"));
         assertRStringEquals("(testing )the test", r("testing the test").insert("(", ")").before("ing (the) te"));
         assertRStringEquals("testing the( test)", r("testing the test").insert("(", ")").after("ing (the) te"));
-        assertRStringEquals("(testing )the( test)", r("testing the test").insert("(", ")").around("ing (the) te"));
+        assertRStringEquals("testing (the) test", r("testing the test").insert("(", ")").around("ing (the) te"));
         assertRStringEquals("testing (the) test", r("testing the test").insert("(", ")").inside("ing (the) te"));
+        assertRStringEquals("(testing )the( test)", r("testing the test").insert("(", ")").onNoMatches("ing (the) te"));
         
         // Multiple matches
         assertRStringEquals("(te)sting the (te)st", r("testing the test").insert("(", ")").inside("te"));
-        // TODO: Useful, but not really intuitive, we need to make this better 
-        // At least the meaning is compatible with "delete"
-        assertRStringEquals("te(sting the )te(st)", r("testing the test").insert("(", ")").around("te"));
-        assertRStringEquals("(te)st(ing the te)st", r("testing the test").insert("(", ")").around("st"));
+        assertRStringEquals("(te)sting the (te)st", r("testing the test").insert("(", ")").around("te"));
+        assertRStringEquals("(te)sting the (te)st", r("testing the test").insert("(", ")").onMatches("te"));
+        assertRStringEquals("te(sting the )te(st)", r("testing the test").insert("(", ")").onNoMatches("te"));
+        assertRStringEquals("(te)st(ing the te)st", r("testing the test").insert("(", ")").onNoMatches("st"));
         
-        assertRStringEquals("(test)ing( the )te(st)", r("testing the test").insert("(", ")").around("(ing).*(te)"));
+        assertRStringEquals("test(ing) the (te)st", r("testing the test").insert("(", ")").around("(ing).*(te)"));
+        assertRStringEquals("(test)ing( the )te(st)", r("testing the test").insert("(", ")").onNoMatches("(ing).*(te)"));
         assertRStringEquals("test(ing) the (te)st", r("testing the test").insert("(", ")").inside("(ing).*(te)"));
     }
 
@@ -96,6 +99,19 @@ public class RStringTest {
         assertRStringEquals("|te|test", r("testing the test").replace("|").before("te"));
         assertRStringEquals("|sting the |st", r("testing the test").replace("|").inside("te"));
         assertRStringEquals("|es|es|", r("testing the test").replace("|").around("es"));
+    }
+    
+    @Test
+    public void transformations() throws Exception {
+    	assertRStringEquals("Testing The Test", r("testing the test").capitalize().words());
+    	assertRStringEquals("TESTING THE test", r("TESTING THE TEST").toLowerCase().lastWord());
+    	assertRStringEquals("test the testing", r("testing the test").changePlaces().around(" the "));
+    	assertRStringEquals("Uliana, Ronie", r("Ronie Uliana").changePlaces().words().insert(",").after("^\\w+"));
+    	
+    	assertRStringEquals("testing test the", r("testing the test").changePlaces().onMatch("(the) (test)"));
+    	// "changePlaces only works in even number of matches    	
+    	assertRStringEquals("testing test the", r("testing the test").changePlaces().onMatch("(testing) (the) (test)"));
+    	assertRStringEquals("testing the test", r("testing the test").changePlaces().onMatch("testing the (test)"));
     }
     
     @Test
@@ -125,19 +141,26 @@ public class RStringTest {
     }
     
     @Test
-    public void interestingUses() throws Exception {
+    public void interestingUsesAndTheirEquivalents() throws Exception {
         // This is easier to do with conventional replace, not worth :(
-        assertRStringEquals("emphasis on <em>this</em> word", r("emphasis on this word").insert("<em>", "</em>").inside("this"));
+        assertRStringEquals("emphasis on <em>this</em> word", r("emphasis on this word").insert("<em>", "</em>").around("this"));
         assertEquals("emphasis on <em>this</em> word", "emphasis on this word".replaceAll("(this)", "<em>$1</em>"));
-        
-        // 
-        assertRStringEquals("emphasis on <em>this</em> word", r("emphasis on this word").insert("<em>", "</em>").inside("on (.*?) word"));
-        assertRStringEquals("<em>emphasis</em> not <em>on the</em> not <em>word</em>", r("emphasis not on the not word").insert("<em>", "</em>").around("\\s+not\\s+"));
         
         // This is easier to do with conventional replace, not worth :(
         assertRStringEquals("T.I.A.", r("This Is an Acronym").extract("[A-Z]").insert(".").after("\\w"));
         assertEquals("T.I.A.", "This Is an Acronym".replaceAll("([A-Z])[^A-Z]+", "$1."));
         
+        // Emphasis on the next word
+        assertRStringEquals("emphasis on <em>this</em> word", r("emphasis on this word").insert("<em>", "</em>").around("on (\\w*)"));
+        
+        // Emphasis on everything, but the word
+        assertRStringEquals("<em>emphasis </em>not<em> on the </em>not<em> word</em>", r("emphasis not on the not word").insert("<em>", "</em>").onNoMatches("not"));
+        
+        assertRStringEquals("camel_case_to_underscore", r("CamelCaseToUnderscore").insert("_").before("[a-z]([A-Z])").decapitalize().words());
+        
+        assertRStringEquals("CamelCaseToUnderscore", r("camel_case_to_underscore").capitalize().after("^|_").delete().onMatch("_"));
+        
+        assertRStringEquals("Ronie Uliana", r("RoNIE Blah Miguel Wah uliANA").delete().inside("^\\w+\\b ?(.*)\\b\\w+$").capitalize().words());
     }
     
     private void assertRStringEquals(String expected, RString actual) {

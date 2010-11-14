@@ -1,10 +1,16 @@
-package ginger;
+package ginger.experimental;
 
 /**
+ * This class provides and interface to manipulate matches on Xtring (method
+ * {@link Xtring#run(OnMatch)}). It provides several helper methods to match
+ * and manipulate the Xtring.
+ * 
  * <p>
+ * Example: <br />
  * String: "testing the xtring"<br />
  * Regular expression: " the " (with whitespaces around)
  * </p>
+ * 
  * <pre>
  * t <= previousStart() = 0
  * e   
