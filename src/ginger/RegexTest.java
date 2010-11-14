@@ -53,7 +53,18 @@ public class RegexTest {
 		
 		result = regex.findAll("f(\\w+)d.*(.{3})$");
 		assertEquals(2, result.size());
-		assertEquals("in", result.getFirst());
+		assertEquals("in", result.get(0));
 		assertEquals("ing", result.get(1));
+		
+		result = regex.findAll("\\w+");
+		assertEquals(5, result.size());
+		assertEquals("a", result.get(0));
+		assertEquals("text", result.get(1));
+		assertEquals("everything", result.get(4));
+		
+		result = r("<em>mark</em> <strong>them</strong>").findAll(">(\\w+)<");
+		assertEquals(2, result.size());
+		assertEquals("mark", result.get(0));
+		assertEquals("them", result.get(1));
 	}
 }

@@ -54,4 +54,10 @@ Since we cannot override String (why they do care so much about me messing MY pr
 
 Ginger answer to it is an object called (surprise! surprise!) "Regex".
 
-This one is a working in progress too :)
+Extract something from a string can now be direct as:
+
+    String lastWord = r("That's my name").find("\\w+$");
+
+Or, we can get use the capture groups:
+
+    List<String> myWords = r("<em>mark</em> <strong>them</strong>").findAll(">(\\w+)<")

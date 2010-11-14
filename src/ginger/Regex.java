@@ -105,11 +105,11 @@ public class Regex {
 	 */
 	public String find(String regex, int flags) {
 		LinkedList<String> matches = findAll(regex, flags);
-		if (matches.isEmpty()) {
-			return null;
-		} else {
-			return matches.getFirst();
-		}
+		
+		// Guard clause
+		if (matches.isEmpty()) return null;
+		
+		return matches.getFirst();
 	}
 
 	/**
@@ -139,16 +139,18 @@ public class Regex {
 	public LinkedList<String> findAll(String regex, int flags) {
 		Matcher matcher = matcherFor(regex, flags);
 		
-		if (!matcher.find()) return newList();
-		if (matcher.groupCount() == 0) {
-			return newList(matcher.group());
-		} else {
-			LinkedList<String> result = newList();
-			for (int i = 1; i <= matcher.groupCount(); i++) {
-				result.add(matcher.group(i));
-			}
-			return result;
-		}
+		LinkedList<String> result = new LinkedList<String>();
+		while (matcher.find()) result.addAll(matcher2List(matcher));
+		return result;
+	}
+	
+	private LinkedList<String> matcher2List(Matcher matcher) {
+		
+		if (matcher.groupCount() == 0) return newList(matcher.group());
+		
+		LinkedList<String> result = newList();
+		for (int i = 1; i <= matcher.groupCount(); i++) result.add(matcher.group(i));
+		return result;
 	}
 	
 	private Matcher matcherFor(String regex, int flags) {
@@ -157,9 +159,7 @@ public class Regex {
 	
 	private static <T> LinkedList<T> newList(T...elements) {
 		LinkedList<T> result = new LinkedList<T>();
-		for (T element : elements) {
-			result.add(element);
-		}
+		for (T element : elements) result.add(element);
 		return result;
 	}
 }
