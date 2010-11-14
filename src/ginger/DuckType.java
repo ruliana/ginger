@@ -42,13 +42,16 @@ import java.util.Map;
  * </pre>
  * <p>
  * Why this is better than the Java way?
+ * </p>
  * <ul>
  * <li>There is only one object to deal with;</li>
  * <li>It's boring to find methods that use primitive as arguments;</li>
  * <li>It's <em>really</em> boring to find methods that one of the arguments is
- * an ancestor of what you have in hands.</li>
+ * an ancestor of what you have in hands;</li>
+ * <li>No half a dozen of stupid checked exceptions to handle each time you
+ * need to use a little bit of reflection.
+ * (However, be a little careful as we still have exceptions)</li>
  * </ul>
- * </p>
  * <p>
  * There is a cache for methods inside DuckType. It's static and it's solely
  * purpose is to speed up the lookup process, which can be pretty slow. It's
@@ -233,7 +236,7 @@ public class DuckType {
     }
 
     /**
-     * Same as {@link #call(String, Object...)}, but wraps the returning value
+     * Same as {@link #call(String, Object...)}, but it wraps the returning value
      * in another DuckType, allowing chain call.
      */
     public DuckType callChained(CharSequence methodName, Object... arguments)
@@ -252,7 +255,7 @@ public class DuckType {
             return findMethodEasyWay(methodName, argumentTypes);
 
             /*
-             * I'm not really proud of use a catch to provide an alternative
+             * I'm not really proud of using a catch to provide an alternative
              * path, but hell, I guess my intention can't be clearer!
              */
         } catch (java.lang.NoSuchMethodException e) {
@@ -272,7 +275,7 @@ public class DuckType {
     }
 
     /**
-     * "Easy way" is to call "getMethod" directly. Unfortunately, there is
+     * "Easy way" is to call "getMethod" directly. Unfortunately, there are
      * several cases when this does not match, mainly if the argument types are
      * superclasses of the arguments you have or if they are primitives.
      */
