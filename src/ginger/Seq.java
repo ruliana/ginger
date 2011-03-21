@@ -3,14 +3,13 @@ package ginger;
 import static java.util.Arrays.asList;
 
 import java.util.Collection;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 public class Seq<T> {
 	
-	private Deque<T> objects;
+	private LinkedList<T> objects;
 
 	public Seq(){
 		this.objects = new LinkedList<T>();
@@ -65,7 +64,7 @@ public class Seq<T> {
 	}
 
 	public Seq<T> removeNullsAndEmpties() {
-		Deque<T> result = new LinkedList<T>();
+		LinkedList<T> result = new LinkedList<T>();
 		for (T element : objects) {
 			if (element == null) continue;
 			if (element.toString().trim().equals("")) continue;

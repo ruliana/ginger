@@ -1,6 +1,8 @@
 package ginger;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -104,7 +106,7 @@ public class Regex {
 	 * @see #findAll(String, int)
 	 */
 	public String find(String regex, int flags) {
-		LinkedList<String> matches = findAll(regex, flags);
+		ExpandedList<String> matches = findAll(regex, flags);
 		
 		// Guard clause
 		if (matches.isEmpty()) return null;
@@ -115,7 +117,7 @@ public class Regex {
 	/**
 	 * Alias for {@link #findAll(String, int)} 
 	 */
-	public LinkedList<String> findAll(String regex) {
+	public ExpandedList<String> findAll(String regex) {
 		return findAll(regex, 0);
 	}
 	
@@ -136,19 +138,19 @@ public class Regex {
 	 * @see #find(String)
 	 * @see #findAll(String)
 	 */
-	public LinkedList<String> findAll(String regex, int flags) {
+	public ExpandedList<String> findAll(String regex, int flags) {
 		Matcher matcher = matcherFor(regex, flags);
 		
-		LinkedList<String> result = new LinkedList<String>();
+		ExpandedList<String> result = new ExpandedList<String>();
 		while (matcher.find()) result.addAll(matcher2List(matcher));
 		return result;
 	}
 	
-	private LinkedList<String> matcher2List(Matcher matcher) {
+	private ExpandedList<String> matcher2List(Matcher matcher) {
 		
 		if (matcher.groupCount() == 0) return newList(matcher.group());
 		
-		LinkedList<String> result = newList();
+		ExpandedList<String> result = newList();
 		for (int i = 1; i <= matcher.groupCount(); i++) result.add(matcher.group(i));
 		return result;
 	}
@@ -157,9 +159,27 @@ public class Regex {
 		return Pattern.compile(regex, flags).matcher(targetString);
 	}
 	
-	private static <T> LinkedList<T> newList(T...elements) {
-		LinkedList<T> result = new LinkedList<T>();
+	private static <T> ExpandedList<T> newList(T...elements) {
+		ExpandedList<T> result = new ExpandedList<T>();
 		for (T element : elements) result.add(element);
 		return result;
+	}
+	
+	@SuppressWarnings("serial")
+	public static class ExpandedList<T> extends LinkedList<T>	{
+		public LinkedList<Map<String, T>> named(String... names) {
+			LinkedList<Map<String, T>> result = new LinkedList<Map<String, T>>();
+			
+			for (int i = 0; i < this.size();) {
+				HashMap<String, T> item = new HashMap<String, T>();
+				
+				for (int j = 0; j < names.length; j++, i++) {
+					item.put(names[j], this.get(i));
+				}
+				result.add(item);
+			}
+			
+			return result;
+		}
 	}
 }

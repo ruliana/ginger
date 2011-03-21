@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNull;
 import static ginger.Regex.r;
 
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
@@ -66,5 +67,16 @@ public class RegexTest {
 		assertEquals(2, result.size());
 		assertEquals("mark", result.get(0));
 		assertEquals("them", result.get(1));
+	}
+
+	@Test
+	public void findAllNamed() throws Exception {
+		Regex regex = new Regex("a text to find everything, a find to another thing.");
+		
+		LinkedList<Map<String, String>> result = regex.findAll("(find).*?(thing)").named("first", "second");
+		assertEquals("find", result.get(0).get("first"));
+		assertEquals("thing", result.get(0).get("second"));
+		assertEquals("find", result.get(1).get("first"));
+		assertEquals("thing", result.get(1).get("second"));
 	}
 }
