@@ -33,7 +33,7 @@ import java.util.Map;
  * 
  * <pre>
  * // &quot;duck&quot; is the same as &quot;new DuckType&quot;, just shorter.
- * // Nice for inline use. 
+ * // Nice for inline use.
  * duck(myObject).call(&quot;myMethodName&quot;);
  * 
  * // &quot;d&quot; is the same, but even shorter.
@@ -48,9 +48,9 @@ import java.util.Map;
  * <li>It's boring to find methods that use primitive as arguments;</li>
  * <li>It's <em>really</em> boring to find methods that one of the arguments is
  * an ancestor of what you have in hands;</li>
- * <li>No half a dozen of stupid checked exceptions to handle each time you
- * need to use a little bit of reflection.
- * (However, be a little careful as we still have exceptions)</li>
+ * <li>No half a dozen of stupid checked exceptions to handle each time you need
+ * to use a little bit of reflection. (However, be a little careful as we still
+ * have exceptions)</li>
  * </ul>
  * <p>
  * There is a cache for methods inside DuckType. It's static and it's solely
@@ -181,7 +181,8 @@ public class DuckType {
      * Calls a method dynamically.
      * <p>
      * The <em>methodName</em> can be a {@link CharSequence}, that means it's
-     * possible to use {@link String}, {@link StringBuilder} and several other
+     * possible to use {@link String}, {@link StringBuilder} and several other            // Not sure if I should rethrow it... :|
+
      * objects as the method name.
      * </p>
      * 
@@ -198,8 +199,7 @@ public class DuckType {
      *             A custom NoSuchMethodException that's not checked.
      */
     @SuppressWarnings("unchecked")
-    public <T> T call(CharSequence methodName, Object... arguments)
-            throws NoSuchMethodException {
+    public <T> T call(CharSequence methodName, Object... arguments) throws NoSuchMethodException {
 
         // Guard clause
         if (object == null) return null;
@@ -208,8 +208,7 @@ public class DuckType {
         Class<?>[] argumentTypes = classesFor(arguments);
         String objectType = object.getClass().getName();
 
-        Method method = cache.get(objectType, immutableMethodName,
-                                  argumentTypes);
+        Method method = cache.get(objectType, immutableMethodName, argumentTypes);
 
         // If no method in cache, go find it and fill my cache
         if (method == null) {
@@ -236,11 +235,10 @@ public class DuckType {
     }
 
     /**
-     * Same as {@link #call(String, Object...)}, but it wraps the returning value
-     * in another DuckType, allowing chain call.
+     * Same as {@link #call(String, Object...)}, but it wraps the returning
+     * value in another DuckType, allowing chain call.
      */
-    public DuckType callChained(CharSequence methodName, Object... arguments)
-            throws NoSuchMethodException {
+    public DuckType callChained(CharSequence methodName, Object... arguments) throws NoSuchMethodException {
 
         return new DuckType(call(methodName, arguments));
     }
@@ -262,7 +260,6 @@ public class DuckType {
 
             Method method = findMethodHardWay(methodName, argumentTypes);
 
-            // Not sure if I should rethrow it... :|
             if (method == null) throw new NoSuchMethodException(e);
 
             return method;
@@ -296,12 +293,10 @@ public class DuckType {
             Class<?>[] parameterTypes = method.getParameterTypes();
 
             if (!methodName.equals(method.getName())) continue nextMethod;
-            if (parameterTypes.length != argumentTypes.length)
-                continue nextMethod;
+            if (parameterTypes.length != argumentTypes.length) continue nextMethod;
 
             for (int i = 0; i < parameterTypes.length; i++)
-                if (notCompatible(parameterTypes[i], argumentTypes[i]))
-                    continue nextMethod;
+                if (notCompatible(parameterTypes[i], argumentTypes[i])) continue nextMethod;
 
             return method;
         }
@@ -320,8 +315,7 @@ public class DuckType {
      * </ul>
      */
     private boolean isCompatible(Class<?> type1, Class<?> type2) {
-        return primitivelyCompatible(type1, type2)
-                || assignableCompatible(type1, type2);
+        return primitivelyCompatible(type1, type2) || assignableCompatible(type1, type2);
     }
 
     private boolean notCompatible(Class<?> type1, Class<?> type2) {

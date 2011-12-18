@@ -8,10 +8,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import ginger.categories.SlowTest;
+
 import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 public class DuckTypeTest {
 
@@ -73,6 +76,7 @@ public class DuckTypeTest {
      * Slow test.
      */
     @Test
+    @Category(SlowTest.class)
     public void methodCachingShouldMakeDifference() throws Exception {
         int subjectSize = 100000;
 
